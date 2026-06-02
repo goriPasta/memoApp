@@ -19,49 +19,37 @@ class Storage {
         localStorage.setItem(this.CONFIG_KEY, JSON.stringify(config));
     }
 
-    async getNotes() {
+    async getNotes(mode = 'inbox') {
         const config = this.getConfig();
-        if (config && config.token && config.repo && config.path) {
-            return await this.getNotesFromGitHub(config);
+        const fileName = mode === 'inbox' ? 'inbox.json' : 'brain.json';
+        
+        if (config && config.token && config.repo) {
+            return await this.getNotesFromGitHub(config, fileName);
         } else {
-            return await this.getNotesFromLocal();
+            return await this.getNotesFromLocal(fileName);
         }
     }
 
-    async saveNotes(notes) {
+    async saveNotes(notes, mode = 'inbox') {
         const config = this.getConfig();
-        if (config && config.token && config.repo && config.path) {
-            await this.saveNotesToGitHub(config, notes);
+        const fileName = mode === 'inbox' ? 'inbox.json' : 'brain.json';
+
+        if (config && config.token && config.repo) {
+            await this.saveNotesToGitHub(config, fileName, notes);
         } else {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(notes));
+            localStorage.setItem(`${this.STORAGE_KEY}_${fileName}`, JSON.stringify(notes));
         }
     }
 
     // Local Logic
-    async getNotesFromLocal() {
-        let notes = localStorage.getItem(this.STORAGE_KEY);
-        if (!notes) {
-            try {
-                const response = await fetch('./data/notes.json');
-                const initialData = await response.json();
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(initialData));
-                return initialData;
-            } catch (e) {
-                console.error('Local fetch failed', e);
-                return [];
-            }
-        }
-        try {
-            return JSON.parse(notes);
-        } catch (e) {
-            console.error('Local JSON parse failed', e);
-            return [];
-        }
+    async getNotesFromLocal(fileName) {
+        let notes = localStorage.getItem(`${this.STORAGE_KEY}_${fileName}`);
+        return notes ? JSON.parse(notes) : [];
     }
 
     // GitHub Logic
-    async getNotesFromGitHub(config) {
-        const url = `https://api.github.com/repos/${config.repo}/contents/${config.path}`;
+    async getNotesFromGitHub(config, fileName) {
+        const url = `https://api.github.com/repos/${config.repo}/contents/${fileName}`;
         try {
             const response = await fetch(url, {
                 headers: {
@@ -71,7 +59,7 @@ class Storage {
             });
 
             if (response.status === 404) {
-                return await this.getNotesFromLocal();
+                return [];
             }
 
             if (!response.ok) {
@@ -83,17 +71,31 @@ class Storage {
             const content = atob(data.content.replace(/\n/g, ''));
             return JSON.parse(decodeURIComponent(escape(content)));
         } catch (e) {
-            console.error('GitHub fetch failed, falling back to local', e);
-            return await this.getNotesFromLocal();
+            console.error('GitHub fetch failed', e);
+            return await this.getNotesFromLocal(fileName);
         }
     }
 
-    async saveNotesToGitHub(config, notes) {
-        const url = `https://api.github.com/repos/${config.repo}/contents/${config.path}`;
+    async saveNotesToGitHub(config, fileName, notes) {
+        const url = `https://api.github.com/repos/${config.repo}/contents/${fileName}`;
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(notes, null, 2))));
         
+        // Before saving, we need the latest SHA
+        try {
+            const res = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${config.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                this.ghSha = data.sha;
+            }
+        } catch (e) { /* ignore 404 */ }
+
         const body = {
-            message: `Update notes: ${new Date().toISOString()}`,
+            message: `Update ${fileName}: ${new Date().toISOString()}`,
             content: content,
             sha: this.ghSha
         };
@@ -116,8 +118,7 @@ class Storage {
         const data = await response.json();
         this.ghSha = data.content.sha;
         
-        // Also sync to local for offline/backup
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(notes));
+        localStorage.setItem(`${this.STORAGE_KEY}_${fileName}`, JSON.stringify(notes));
     }
 
     // Convenience methods

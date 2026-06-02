@@ -16,7 +16,12 @@ const ghTokenInput = document.getElementById('gh-token');
 const ghRepoInput = document.getElementById('gh-repo');
 const ghPathInput = document.getElementById('gh-path');
 
+const tabInbox = document.getElementById('tab-inbox');
+const tabBrain = document.getElementById('tab-brain');
+const noteEditor = document.getElementById('note-editor');
+
 let editingId = null;
+let currentMode = 'inbox'; // 'inbox' or 'brain'
 
 // Initialize app
 async function init() {
@@ -33,16 +38,27 @@ async function init() {
     closeSettingsBtn.addEventListener('click', () => settingsModal.style.display = 'none');
     saveSettingsBtn.addEventListener('click', saveSettings);
 
+    // Tabs
+    tabInbox.addEventListener('click', () => switchMode('inbox'));
+    tabBrain.addEventListener('click', () => switchMode('brain'));
+
     // Then load data
-    try {
-        await renderNotes();
-    } catch (e) {
-        console.error('Failed to load notes', e);
-    }
+    await renderNotes();
+}
+
+async function switchMode(mode) {
+    currentMode = mode;
+    tabInbox.classList.toggle('active', mode === 'inbox');
+    tabBrain.classList.toggle('active', mode === 'brain');
+    
+    // Inbox only: show editor
+    noteEditor.style.display = mode === 'inbox' ? 'block' : 'none';
+    
+    await renderNotes();
 }
 
 function openSettings() {
-    const config = storage.getConfig() || { token: '', repo: '', path: 'data/notes.json' };
+    const config = storage.getConfig() || { token: '', repo: '', path: 'inbox.json' };
     ghTokenInput.value = config.token;
     ghRepoInput.value = config.repo;
     ghPathInput.value = config.path;
@@ -57,8 +73,8 @@ async function saveSettings() {
     };
     storage.saveConfig(config);
     settingsModal.style.display = 'none';
-    alert('設定を保存しました。再読み込みして同期を開始します。');
-    location.reload();
+    alert('設定を保存しました。');
+    await renderNotes();
 }
 
 function initTheme() {
@@ -92,7 +108,8 @@ async function saveNote() {
             id: crypto.randomUUID(),
             text,
             tags,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            source: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'mobile' : 'pc'
         };
         await storage.addNote(newNote);
     }
@@ -111,12 +128,14 @@ function resetEditor() {
 
 async function renderNotes() {
     const query = searchInput.value.toLowerCase();
-    const notes = await storage.getNotes();
+    const notes = await storage.getNotes(currentMode);
     
     const filteredNotes = notes.filter(note => {
         const textMatch = note.text.toLowerCase().includes(query);
-        const tagMatch = note.tags.some(tag => tag.toLowerCase().includes(query.replace('#', '')));
-        return textMatch || tagMatch;
+        const tags = note.tags || [];
+        const tagMatch = tags.some(tag => tag.toLowerCase().includes(query.replace('#', '')));
+        const categoryMatch = (note.category || '').toLowerCase().includes(query);
+        return textMatch || tagMatch || categoryMatch;
     });
 
     noteList.innerHTML = '';
@@ -125,21 +144,27 @@ async function renderNotes() {
         card.className = 'note-card';
         
         const date = new Date(note.created_at).toLocaleString();
+        const tags = note.tags || [];
         
         card.innerHTML = `
-            <div class="note-date">${date}</div>
+            <div class="note-date">${date} ${note.category ? `| 📁 ${note.category}` : ''}</div>
             <div class="note-text">${escapeHtml(note.text)}</div>
+            ${note.summary ? `<div class="note-summary">📝 ${escapeHtml(note.summary)}</div>` : ''}
             <div class="note-tags">
-                ${note.tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
+                ${tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
             </div>
             <div class="note-actions">
-                <button class="edit-btn secondary" data-id="${note.id}">編集</button>
-                <button class="delete-btn danger" data-id="${note.id}">削除</button>
+                ${currentMode === 'inbox' ? `
+                    <button class="edit-btn secondary" data-id="${note.id}">編集</button>
+                    <button class="delete-btn danger" data-id="${note.id}">削除</button>
+                ` : ''}
             </div>
         `;
         
-        card.querySelector('.edit-btn').addEventListener('click', () => editNote(note));
-        card.querySelector('.delete-btn').addEventListener('click', () => deleteNote(note.id));
+        if (currentMode === 'inbox') {
+            card.querySelector('.edit-btn').addEventListener('click', () => editNote(note));
+            card.querySelector('.delete-btn').addEventListener('click', () => deleteNote(note.id));
+        }
         
         noteList.appendChild(card);
     });
