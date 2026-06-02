@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memo System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Memo System</h1>
+        <div class="header-actions">
+            <button id="settings-btn" class="secondary">⚙️</button>
+            <button id="theme-toggle" class="secondary">🌓</button>
+        </div>
+    </header>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>GitHub 連携設定</h2>
+            <div class="form-group">
+                <label>GitHub Personal Access Token:</label>
+                <input type="password" id="gh-token" placeholder="ghp_...">
+            </div>
+            <div class="form-group">
+                <label>Repository (owner/repo):</label>
+                <input type="text" id="gh-repo" placeholder="user/memo-repo">
+            </div>
+            <div class="form-group">
+                <label>File Path:</label>
+                <input type="text" id="gh-path" placeholder="data/notes.json">
+            </div>
+            <div class="modal-actions">
+                <button id="save-settings-btn">保存</button>
+                <button id="close-settings-btn" class="secondary">閉じる</button>
+            </div>
+            <p class="hint">※ トークンはブラウザの localStorage に保存されます。</p>
+        </div>
+    </div>
+
+    <main>
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="検索（キーワード、#タグ）...">
+        </div>
+
+        <div class="editor" id="note-editor">
+            <textarea id="note-textarea" placeholder="メモを入力..."></textarea>
+            <input type="text" id="tag-input" placeholder="タグ（カンマ区切り）">
+            <div class="editor-actions">
+                <button id="save-btn">保存</button>
+                <button id="cancel-btn" class="secondary" style="display: none;">キャンセル</button>
+            </div>
+        </div>
+
+        <div class="note-list" id="note-list">
+            <!-- Notes will be rendered here -->
+        </div>
+    </main>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
