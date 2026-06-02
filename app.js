@@ -19,9 +19,12 @@ const ghPathInput = document.getElementById('gh-path');
 const tabInbox = document.getElementById('tab-inbox');
 const tabBrain = document.getElementById('tab-brain');
 const noteEditor = document.getElementById('note-editor');
+const sidebar = document.getElementById('sidebar');
+const categoryTree = document.getElementById('category-tree');
 
 let editingId = null;
 let currentMode = 'inbox'; // 'inbox' or 'brain'
+let selectedCategory = null;
 
 // Initialize app
 async function init() {
@@ -42,19 +45,70 @@ async function init() {
     tabInbox.addEventListener('click', () => switchMode('inbox'));
     tabBrain.addEventListener('click', () => switchMode('brain'));
 
+    // Category filtering
+    categoryTree.addEventListener('click', (e) => {
+        const item = e.target.closest('.category-item');
+        if (item) {
+            const category = item.dataset.category === 'all' ? null : item.dataset.category;
+            selectCategory(category);
+        }
+    });
+
     // Then load data
     await renderNotes();
 }
 
 async function switchMode(mode) {
     currentMode = mode;
+    selectedCategory = null;
     tabInbox.classList.toggle('active', mode === 'inbox');
     tabBrain.classList.toggle('active', mode === 'brain');
     
-    // Inbox only: show editor
+    // Inbox only: show editor, hide sidebar
     noteEditor.style.display = mode === 'inbox' ? 'block' : 'none';
+    sidebar.style.display = mode === 'brain' ? 'block' : 'none';
+    
+    if (mode === 'brain') {
+        await renderCategoryTree();
+    }
     
     await renderNotes();
+}
+
+async function renderCategoryTree() {
+    const notes = await storage.getNotes('brain');
+    const categories = new Set();
+    
+    notes.forEach(note => {
+        if (note.category) {
+            // Add full category and also parent categories
+            const parts = note.category.split('/');
+            let path = '';
+            parts.forEach((part, index) => {
+                path += (index === 0 ? '' : '/') + part;
+                categories.add(path);
+            });
+        }
+    });
+
+    const sortedCategories = Array.from(categories).sort();
+    
+    categoryTree.innerHTML = `
+        <li class="category-item ${!selectedCategory ? 'active' : ''}" data-category="all">📁 全て</li>
+        ${sortedCategories.map(cat => {
+            const isChild = cat.includes('/');
+            const label = isChild ? cat.split('/').pop() : cat;
+            return `<li class="category-item ${isChild ? 'child' : ''} ${selectedCategory === cat ? 'active' : ''}" data-category="${cat}">
+                ${isChild ? '└ ' : ''}${label}
+            </li>`;
+        }).join('')}
+    `;
+}
+
+function selectCategory(category) {
+    selectedCategory = category;
+    renderCategoryTree();
+    renderNotes();
 }
 
 function openSettings() {
@@ -135,7 +189,14 @@ async function renderNotes() {
         const tags = note.tags || [];
         const tagMatch = tags.some(tag => tag.toLowerCase().includes(query.replace('#', '')));
         const categoryMatch = (note.category || '').toLowerCase().includes(query);
-        return textMatch || tagMatch || categoryMatch;
+        
+        // Category tree filter
+        let treeMatch = true;
+        if (currentMode === 'brain' && selectedCategory) {
+            treeMatch = note.category === selectedCategory || (note.category || '').startsWith(selectedCategory + '/');
+        }
+
+        return (textMatch || tagMatch || categoryMatch) && treeMatch;
     });
 
     noteList.innerHTML = '';

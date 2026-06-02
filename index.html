@@ -49,17 +49,26 @@
             <input type="text" id="search-input" placeholder="検索（キーワード、#タグ）...">
         </div>
 
-        <div class="editor" id="note-editor">
-            <textarea id="note-textarea" placeholder="メモを入力..."></textarea>
-            <input type="text" id="tag-input" placeholder="タグ（カンマ区切り）">
-            <div class="editor-actions">
-                <button id="save-btn">保存</button>
-                <button id="cancel-btn" class="secondary" style="display: none;">キャンセル</button>
-            </div>
-        </div>
+        <div class="app-container">
+            <aside id="sidebar" class="sidebar" style="display: none;">
+                <div class="sidebar-header">📂 Categories</div>
+                <ul id="category-tree"></ul>
+            </aside>
 
-        <div class="note-list" id="note-list">
-            <!-- Notes will be rendered here -->
+            <div id="content-area">
+                <div class="editor" id="note-editor">
+                    <textarea id="note-textarea" placeholder="メモを入力..."></textarea>
+                    <input type="text" id="tag-input" placeholder="タグ（カンマ区切り）">
+                    <div class="editor-actions">
+                        <button id="save-btn">保存</button>
+                        <button id="cancel-btn" class="secondary" style="display: none;">キャンセル</button>
+                    </div>
+                </div>
+
+                <div class="note-list" id="note-list">
+                    <!-- Notes will be rendered here -->
+                </div>
+            </div>
         </div>
     </main>
 

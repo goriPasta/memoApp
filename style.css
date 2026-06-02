@@ -67,14 +67,112 @@ header {
 
 main {
     width: 100%;
-    max-width: 600px;
+    max-width: 1000px;
     padding: 1rem;
     box-sizing: border-box;
+    margin: 0 auto;
 }
 
-.search-box {
+.app-container {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+#content-area {
+    flex: 1;
+    min-width: 0; /* Prevents overflow in flex items */
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 200px;
+    background: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    font-size: 0.9rem;
+    font-weight: bold;
     margin-bottom: 1rem;
-    width: 100%;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#category-tree {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.category-item {
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+    transition: background 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.category-item:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+.category-item.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.category-item.child {
+    padding-left: 1.5rem;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+        display: flex !important; /* Show as horizontal chips on mobile */
+        flex-direction: column;
+    }
+
+    #category-tree {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .category-item {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        padding: 0.3rem 0.8rem;
+        border-radius: 16px;
+    }
+}
+
+.note-summary {
+    background: rgba(0, 123, 255, 0.05);
+    border-left: 3px solid var(--primary-color);
+    padding: 0.5rem 0.8rem;
+    margin: 0.8rem 0;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    font-style: italic;
 }
 
 .search-box input {
