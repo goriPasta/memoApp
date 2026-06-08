@@ -97,23 +97,56 @@ async function renderCategoryTree() {
         }
     });
 
-    const sortedCategories = Array.from(categories).sort((a, b) => {
-        // Keep base categories at top if possible, or just sort normally
-        return a.localeCompare(b);
-    });
+    const allCategories = Array.from(categories);
+    let html = '';
     
-    categoryTree.innerHTML = `
-        <li class="category-item ${!selectedCategory ? 'active' : ''}" data-category="all">📁 全て</li>
-        ${sortedCategories.map(cat => {
-            const depth = (cat.match(/\//g) || []).length;
+    if (selectedCategory) {
+        // Compute parent category path
+        const parts = selectedCategory.split('/');
+        const parentCategory = parts.length > 1 ? parts.slice(0, -1).join('/') : null;
+        
+        // Add "Go to parent folder" item
+        html += `
+            <li class="category-item parent-back" data-category="${parentCategory || 'all'}">
+                📁 ↩ 親フォルダへ (${parts[parts.length - 1]})
+            </li>
+        `;
+        
+        // Filter subcategories that are exactly one level below the selected category
+        const children = allCategories.filter(cat => {
+            const catParts = cat.split('/');
+            if (catParts.length === parts.length + 1) {
+                return cat.startsWith(selectedCategory + '/');
+            }
+            return false;
+        }).sort((a, b) => a.localeCompare(b));
+        
+        children.forEach(cat => {
             const label = cat.split('/').pop();
-            return `<li class="category-item ${depth > 0 ? 'child' : ''} ${selectedCategory === cat ? 'active' : ''}" 
-                data-category="${cat}" 
-                style="padding-left: ${depth * 1 + 0.6}rem">
-                ${depth > 0 ? '└ ' : ''}${label}
-            </li>`;
-        }).join('')}
-    `;
+            html += `
+                <li class="category-item child-folder" data-category="${cat}">
+                    📁 ${label}
+                </li>
+            `;
+        });
+    } else {
+        // Root level: only show categories with depth 0
+        const roots = allCategories.filter(cat => !cat.includes('/')).sort((a, b) => a.localeCompare(b));
+        
+        html += `
+            <li class="category-item ${!selectedCategory ? 'active' : ''}" data-category="all">📁 全て</li>
+        `;
+        
+        roots.forEach(cat => {
+            html += `
+                <li class="category-item" data-category="${cat}">
+                    📁 ${cat}
+                </li>
+            `;
+        });
+    }
+    
+    categoryTree.innerHTML = html;
     updateBreadcrumb();
 }
 
