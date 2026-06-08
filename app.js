@@ -18,12 +18,13 @@ const ghPathInput = document.getElementById('gh-path');
 
 const tabInbox = document.getElementById('tab-inbox');
 const tabBrain = document.getElementById('tab-brain');
+const tabArchive = document.getElementById('tab-archive');
 const noteEditor = document.getElementById('note-editor');
 const sidebar = document.getElementById('sidebar');
 const categoryTree = document.getElementById('category-tree');
 
 let editingId = null;
-let currentMode = 'inbox'; // 'inbox' or 'brain'
+let currentMode = 'inbox'; // 'inbox', 'brain', or 'archive'
 let selectedCategory = null;
 
 // Initialize app
@@ -44,6 +45,7 @@ async function init() {
     // Tabs
     tabInbox.addEventListener('click', () => switchMode('inbox'));
     tabBrain.addEventListener('click', () => switchMode('brain'));
+    tabArchive.addEventListener('click', () => switchMode('archive'));
 
     // Category filtering
     categoryTree.addEventListener('click', (e) => {
@@ -63,8 +65,9 @@ async function switchMode(mode) {
     selectedCategory = null;
     tabInbox.classList.toggle('active', mode === 'inbox');
     tabBrain.classList.toggle('active', mode === 'brain');
+    tabArchive.classList.toggle('active', mode === 'archive');
     
-    // Inbox only: show editor, hide sidebar
+    // UI layout: Editor only in inbox, Sidebar only in brain
     noteEditor.style.display = mode === 'inbox' ? 'block' : 'none';
     sidebar.style.display = mode === 'brain' ? 'block' : 'none';
     

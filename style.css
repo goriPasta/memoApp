@@ -136,6 +136,15 @@ main {
     padding-left: 1.5rem;
     font-size: 0.85rem;
     opacity: 0.9;
+    border-left: 1px solid var(--border-color);
+    margin-left: 0.5rem;
+    border-radius: 0 4px 4px 0;
+}
+
+.category-item.child::before {
+    content: "└ ";
+    color: var(--border-color);
+    margin-right: 4px;
 }
 
 @media (max-width: 768px) {

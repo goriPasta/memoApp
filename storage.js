@@ -21,7 +21,9 @@ class Storage {
 
     async getNotes(mode = 'inbox') {
         const config = this.getConfig();
-        const fileName = mode === 'inbox' ? 'inbox.json' : 'brain.json';
+        let fileName = 'inbox.json';
+        if (mode === 'brain') fileName = 'brain.json';
+        if (mode === 'archive') fileName = 'archive.json';
         
         if (config && config.token && config.repo) {
             return await this.getNotesFromGitHub(config, fileName);
@@ -32,7 +34,9 @@ class Storage {
 
     async saveNotes(notes, mode = 'inbox') {
         const config = this.getConfig();
-        const fileName = mode === 'inbox' ? 'inbox.json' : 'brain.json';
+        let fileName = 'inbox.json';
+        if (mode === 'brain') fileName = 'brain.json';
+        if (mode === 'archive') fileName = 'archive.json';
 
         if (config && config.token && config.repo) {
             await this.saveNotesToGitHub(config, fileName, notes);
