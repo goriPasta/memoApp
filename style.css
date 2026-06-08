@@ -147,6 +147,43 @@ main {
     margin-right: 4px;
 }
 
+/* Breadcrumb Styles */
+.breadcrumb {
+    padding: 0.5rem 1rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #888;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.breadcrumb-item {
+    cursor: pointer;
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.breadcrumb-item:hover {
+    opacity: 0.8;
+}
+
+/* Brain Explorer specific card style */
+.brain-card .note-summary {
+    background: transparent;
+    border-left: none;
+    padding: 0;
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+    color: var(--text-color);
+    font-style: normal;
+    font-weight: 500;
+}
+
+.brain-card {
+    border-left: 4px solid var(--primary-color);
+}
+
 @media (max-width: 768px) {
     .app-container {
         flex-direction: column;

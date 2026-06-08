@@ -22,10 +22,13 @@ const tabArchive = document.getElementById('tab-archive');
 const noteEditor = document.getElementById('note-editor');
 const sidebar = document.getElementById('sidebar');
 const categoryTree = document.getElementById('category-tree');
+const breadcrumb = document.getElementById('breadcrumb');
 
 let editingId = null;
 let currentMode = 'inbox'; // 'inbox', 'brain', or 'archive'
 let selectedCategory = null;
+
+const BASE_CATEGORIES = ['Todo', 'Wishlist', 'Knowledge', 'Diary', 'Mindset'];
 
 // Initialize app
 async function init() {
@@ -67,11 +70,12 @@ async function switchMode(mode) {
     tabBrain.classList.toggle('active', mode === 'brain');
     tabArchive.classList.toggle('active', mode === 'archive');
     
-    // UI layout: Editor only in inbox, Sidebar only in brain
+    // UI layout: Editor only in inbox, Sidebar and Breadcrumb only in brain
     noteEditor.style.display = mode === 'inbox' ? 'block' : 'none';
-    sidebar.style.display = mode === 'brain' ? 'block' : 'none';
+    sidebar.style.display = (mode === 'brain' || mode === 'archive') ? 'block' : 'none';
+    breadcrumb.style.display = mode === 'brain' ? 'block' : 'none';
     
-    if (mode === 'brain') {
+    if (mode === 'brain' || mode === 'archive') {
         await renderCategoryTree();
     }
     
@@ -79,12 +83,11 @@ async function switchMode(mode) {
 }
 
 async function renderCategoryTree() {
-    const notes = await storage.getNotes('brain');
-    const categories = new Set();
+    const notes = await storage.getNotes(currentMode);
+    const categories = new Set(BASE_CATEGORIES);
     
     notes.forEach(note => {
         if (note.category) {
-            // Add full category and also parent categories
             const parts = note.category.split('/');
             let path = '';
             parts.forEach((part, index) => {
@@ -94,18 +97,43 @@ async function renderCategoryTree() {
         }
     });
 
-    const sortedCategories = Array.from(categories).sort();
+    const sortedCategories = Array.from(categories).sort((a, b) => {
+        // Keep base categories at top if possible, or just sort normally
+        return a.localeCompare(b);
+    });
     
     categoryTree.innerHTML = `
         <li class="category-item ${!selectedCategory ? 'active' : ''}" data-category="all">📁 全て</li>
         ${sortedCategories.map(cat => {
-            const isChild = cat.includes('/');
-            const label = isChild ? cat.split('/').pop() : cat;
-            return `<li class="category-item ${isChild ? 'child' : ''} ${selectedCategory === cat ? 'active' : ''}" data-category="${cat}">
-                ${isChild ? '└ ' : ''}${label}
+            const depth = (cat.match(/\//g) || []).length;
+            const label = cat.split('/').pop();
+            return `<li class="category-item ${depth > 0 ? 'child' : ''} ${selectedCategory === cat ? 'active' : ''}" 
+                data-category="${cat}" 
+                style="padding-left: ${depth * 1 + 0.6}rem">
+                ${depth > 0 ? '└ ' : ''}${label}
             </li>`;
         }).join('')}
     `;
+    updateBreadcrumb();
+}
+
+function updateBreadcrumb() {
+    if (currentMode !== 'brain') {
+        breadcrumb.innerHTML = '';
+        return;
+    }
+    if (!selectedCategory) {
+        breadcrumb.innerHTML = '<span>ROOT</span>';
+        return;
+    }
+    const parts = selectedCategory.split('/');
+    breadcrumb.innerHTML = parts.map((part, i) => {
+        const path = parts.slice(0, i + 1).join('/');
+        return `<span class="breadcrumb-item" onclick="selectCategory('${path}')">${part}</span>`;
+    }).join(' > ');
+    
+    // Make breadcrumb items clickable (global scope hack or proper event listener)
+    window.selectCategory = selectCategory; 
 }
 
 function selectCategory(category) {
@@ -192,28 +220,32 @@ async function renderNotes() {
         const tags = note.tags || [];
         const tagMatch = tags.some(tag => tag.toLowerCase().includes(query.replace('#', '')));
         const categoryMatch = (note.category || '').toLowerCase().includes(query);
+        const summaryMatch = (note.summary || '').toLowerCase().includes(query);
         
         // Category tree filter
         let treeMatch = true;
-        if (currentMode === 'brain' && selectedCategory) {
+        if ((currentMode === 'brain' || currentMode === 'archive') && selectedCategory) {
             treeMatch = note.category === selectedCategory || (note.category || '').startsWith(selectedCategory + '/');
         }
 
-        return (textMatch || tagMatch || categoryMatch) && treeMatch;
+        return (textMatch || tagMatch || categoryMatch || summaryMatch) && treeMatch;
     });
 
     noteList.innerHTML = '';
     filteredNotes.forEach(note => {
         const card = document.createElement('div');
-        card.className = 'note-card';
+        card.className = `note-card ${currentMode}-card`;
         
         const date = new Date(note.created_at).toLocaleString();
         const tags = note.tags || [];
         
+        const showText = currentMode !== 'brain';
+        const showSummary = !!note.summary;
+
         card.innerHTML = `
             <div class="note-date">${date} ${note.category ? `| 📁 ${note.category}` : ''}</div>
-            <div class="note-text">${escapeHtml(note.text)}</div>
-            ${note.summary ? `<div class="note-summary">📝 ${escapeHtml(note.summary)}</div>` : ''}
+            ${showText ? `<div class="note-text">${escapeHtml(note.text)}</div>` : ''}
+            ${showSummary ? `<div class="note-summary">📝 ${escapeHtml(note.summary)}</div>` : ''}
             <div class="note-tags">
                 ${tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
             </div>
