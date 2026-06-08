@@ -234,7 +234,7 @@ async function renderNotes() {
     noteList.innerHTML = '';
     filteredNotes.forEach(note => {
         const card = document.createElement('div');
-        card.className = `note-card ${currentMode}-card`;
+        card.className = `note-card ${currentMode}-card markdown-body`;
         
         const date = new Date(note.created_at).toLocaleString();
         const tags = note.tags || [];
@@ -242,10 +242,14 @@ async function renderNotes() {
         const showText = currentMode !== 'brain';
         const showSummary = !!note.summary;
 
+        // Render Markdown
+        const renderedText = showText ? marked.parse(note.text) : '';
+        const renderedSummary = showSummary ? marked.parse(note.summary) : '';
+
         card.innerHTML = `
             <div class="note-date">${date} ${note.category ? `| 📁 ${note.category}` : ''}</div>
-            ${showText ? `<div class="note-text">${escapeHtml(note.text)}</div>` : ''}
-            ${showSummary ? `<div class="note-summary">📝 ${escapeHtml(note.summary)}</div>` : ''}
+            ${showText ? `<div class="note-text">${renderedText}</div>` : ''}
+            ${showSummary ? `<div class="note-summary">${renderedSummary}</div>` : ''}
             <div class="note-tags">
                 ${tags.map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
             </div>
