@@ -108,7 +108,15 @@ async function renderCategoryTree() {
         // Add "Go to parent folder" item
         html += `
             <li class="category-item parent-back" data-category="${parentCategory || 'all'}">
-                📁 ↩ 親フォルダへ (${parts[parts.length - 1]})
+                📁 ↩ 戻る
+            </li>
+        `;
+        
+        // Add current selected category as ACTIVE item
+        const currentLabel = parts[parts.length - 1];
+        html += `
+            <li class="category-item active" data-category="${selectedCategory}">
+                📁 ${currentLabel}
             </li>
         `;
         
