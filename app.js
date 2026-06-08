@@ -28,7 +28,7 @@ let editingId = null;
 let currentMode = 'inbox'; // 'inbox', 'brain', or 'archive'
 let selectedCategory = null;
 
-const BASE_CATEGORIES = ['Todo', 'Wishlist', 'Knowledge', 'Diary', 'Mindset'];
+const BASE_CATEGORIES = ['Todo', 'ウィッシュリスト', 'ナレッジ', '日記', 'マインドセット'];
 
 // Initialize app
 async function init() {
