@@ -214,22 +214,53 @@ main {
 }
 
 @media (max-width: 768px) {
+    header {
+        padding: 0.6rem 1rem;
+    }
+
+    header h1 {
+        font-size: 1.2rem;
+    }
+
+    .tabs {
+        margin-top: 0;
+    }
+
+    .tab-btn {
+        padding: 0.8rem 0.4rem;
+        font-size: 0.85rem;
+    }
+
+    main {
+        padding: 0.5rem;
+    }
+
     .app-container {
         flex-direction: column;
+        gap: 0.8rem;
     }
     
     .sidebar {
         width: 100%;
         position: static;
         max-height: none;
-        display: flex !important; /* Show as horizontal chips on mobile */
-        flex-direction: column;
+        display: block !important;
+        padding: 0.5rem 0;
+        background: transparent;
+        box-shadow: none;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar-header {
+        display: none;
     }
 
     #category-tree {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 0.5rem;
+        padding: 0 0.5rem;
     }
 
     .category-item {
@@ -237,6 +268,34 @@ main {
         border: 1px solid var(--border-color);
         padding: 0.3rem 0.8rem;
         border-radius: 16px;
+        flex: 0 0 auto;
+        font-size: 0.8rem;
+        margin-bottom: 0;
+    }
+
+    .category-item.child {
+        border-left: 1px solid var(--border-color);
+        margin-left: 0;
+    }
+
+    .breadcrumb {
+        padding: 0.4rem 0.8rem;
+        margin-bottom: 0.8rem;
+        font-size: 0.75rem;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .note-card {
+        padding: 0.8rem;
+    }
+
+    .note-date {
+        font-size: 0.7rem;
+    }
+
+    .markdown-body {
+        font-size: 0.95rem;
     }
 }
 
